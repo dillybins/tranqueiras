@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garage — Minha Biblioteca de Carros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0c0e;
+    --surface: #141416;
+    --surface2: #1c1c1f;
+    --border: #2a2a2e;
+    --accent: #e8a020;
+    --accent2: #f0c060;
+    --text: #f0f0f0;
+    --muted: #888;
+    --olx: #a8e6cf;
+    --facebook: #7eb8f7;
+    --webmotors: #f9a875;
+    --icarros: #c9b3f5;
+    --outro: #aaa;
+    --card-radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── LOCK SCREEN ── */
+  #lockScreen {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; flex-direction: column; gap: 24px;
+  }
+  #lockScreen .lock-logo {
+    font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800;
+    letter-spacing: -1px;
+  }
+  #lockScreen .lock-logo span { color: var(--accent); }
+  #lockScreen p { color: var(--muted); font-size: .9rem; }
+  .lock-input-row { display: flex; gap: 8px; }
+  .lock-input-row input {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 12px 16px; border-radius: 8px;
+    font-family: 'DM Mono', monospace; font-size: .95rem;
+    outline: none; width: 220px;
+    transition: border-color .2s;
+  }
+  .lock-input-row input:focus { border-color: var(--accent); }
+  .lock-input-row button {
+    background: var(--accent); color: #000; border: none; padding: 12px 20px;
+    border-radius: 8px; font-family: 'Syne', sans-serif; font-weight: 700;
+    cursor: pointer; font-size: .9rem;
+    transition: background .2s;
+  }
+  .lock-input-row button:hover { background: var(--accent2); }
+  .lock-error { color: #f87171; font-size: .85rem; display: none; }
+
+  /* ── HEADER ── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 40px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: rgba(12,12,14,.92);
+    backdrop-filter: blur(12px); z-index: 100;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800;
+    letter-spacing: -.5px; text-decoration: none; color: var(--text);
+  }
+  .logo span { color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  #countBadge {
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 4px 12px; border-radius: 20px;
+    font-family: 'DM Mono', monospace; font-size: .8rem; color: var(--muted);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 60px 40px 40px;
+    max-width: 900px;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif; font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 800; line-height: 1.05; letter-spacing: -2px;
+    margin-bottom: 12px;
+  }
+  .hero h1 em { color: var(--accent); font-style: normal; }
+  .hero p { color: var(--muted); font-size: 1rem; max-width: 480px; line-height: 1.6; }
+
+  /* ── FILTERS ── */
+  .filters {
+    padding: 0 40px 32px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .search-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 14px; border-radius: 8px; flex: 1; min-width: 220px; max-width: 340px;
+    transition: border-color .2s;
+  }
+  .search-box:focus-within { border-color: var(--accent); }
+  .search-box svg { flex-shrink: 0; color: var(--muted); }
+  .search-box input {
+    background: none; border: none; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: .9rem;
+    padding: 11px 0; outline: none; width: 100%;
+  }
+  .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    padding: 7px 14px; border-radius: 20px; font-size: .8rem; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted);
+    transition: all .18s; white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+  .chip.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+
+  .sort-select {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 14px; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: .85rem; cursor: pointer; outline: none;
+    margin-left: auto;
+  }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 0 40px 60px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: transform .2s, border-color .2s, box-shadow .2s;
+    cursor: pointer;
+    position: relative;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 12px 40px rgba(232,160,32,.12);
+  }
+
+  .card-img {
+    width: 100%; aspect-ratio: 16/10; object-fit: cover;
+    background: var(--surface2);
+    display: block;
+  }
+  .card-img-placeholder {
+    width: 100%; aspect-ratio: 16/10;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+  }
+  .card-img-placeholder svg { width: 48px; height: 48px; opacity: .3; }
+
+  .card-body { padding: 16px 18px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+  .card-source-row { display: flex; align-items: center; justify-content: space-between; }
+  .source-badge {
+    font-size: .7rem; font-weight: 600; letter-spacing: .5px; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 4px; font-family: 'DM Mono', monospace;
+  }
+  .source-olx { background: rgba(168,230,207,.12); color: var(--olx); }
+  .source-facebook { background: rgba(126,184,247,.12); color: var(--facebook); }
+  .source-webmotors { background: rgba(249,168,117,.12); color: var(--webmotors); }
+  .source-icarros { background: rgba(201,179,245,.12); color: var(--icarros); }
+  .source-outro { background: rgba(170,170,170,.1); color: var(--outro); }
+
+  .card-date { font-size: .72rem; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  .card-title {
+    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
+    line-height: 1.3; color: var(--text);
+  }
+
+  .card-specs {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .spec {
+    font-size: .78rem; color: var(--muted);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .spec strong { color: var(--text); font-weight: 500; }
+
+  .card-price {
+    font-family: 'DM Mono', monospace; font-size: 1.25rem; font-weight: 500;
+    color: var(--accent); margin-top: 2px;
+  }
+  .card-price.no-price { color: var(--muted); font-size: .9rem; }
+
+  .card-notes {
+    font-size: .82rem; color: var(--muted); line-height: 1.5;
+    border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px;
+  }
+
+  .card-footer {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    display: flex; gap: 8px;
+  }
+  .btn-link {
+    flex: 1; padding: 9px; border-radius: 8px; border: none;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: .82rem;
+    cursor: pointer; text-decoration: none;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all .18s;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary {
+    background: var(--surface2); color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { color: var(--text); border-color: var(--muted); }
+
+  /* ── FAVED INDICATOR ── */
+  .fav-dot {
+    position: absolute; top: 10px; right: 10px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    grid-column: 1/-1; text-align: center; padding: 80px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+  .empty svg { opacity: .2; width: 64px; height: 64px; }
+  .empty p { color: var(--muted); }
+
+  /* ── LOADING ── */
+  .loading {
+    grid-column: 1/-1; text-align: center; padding: 80px;
+    color: var(--muted); font-family: 'DM Mono', monospace;
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 12px 20px; border-radius: 8px;
+    font-size: .85rem; color: var(--muted);
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+    z-index: 200;
+  }
+  #toast.show { opacity: 1; }
+
+  @media (max-width: 640px) {
+    header { padding: 16px 20px; }
+    .hero { padding: 40px 20px 28px; }
+    .filters { padding: 0 20px 24px; }
+    .grid { padding: 0 20px 40px; gap: 14px; }
+    .sort-select { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lockScreen">
+  <div class="lock-logo">⬡ <span>GARAGE</span></div>
+  <p>Acesso restrito — apenas convidados</p>
+  <div class="lock-input-row">
+    <input type="password" id="lockInput" placeholder="senha..." onkeydown="if(event.key==='Enter')unlock()">
+    <button onclick="unlock()">Entrar</button>
+  </div>
+  <div class="lock-error" id="lockError">Senha incorreta.</div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+
+<header>
+  <a class="logo" href="#">⬡ <span>GARAGE</span></a>
+  <div class="header-right">
+    <span id="countBadge">— anúncios</span>
+  </div>
+</header>
+
+<div class="hero">
+  <h1>Carros que<br>eu <em>gostei</em>.</h1>
+  <p>Biblioteca pessoal de anúncios garimpados. Clique para abrir o original.</p>
+</div>
+
+<div class="filters">
+  <div class="search-box">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="Buscar por marca, modelo..." oninput="applyFilters()">
+  </div>
+  <div class="filter-chips">
+    <div class="chip active" data-source="todos" onclick="setSource('todos')">Todos</div>
+    <div class="chip" data-source="olx" onclick="setSource('olx')">OLX</div>
+    <div class="chip" data-source="facebook" onclick="setSource('facebook')">Facebook</div>
+    <div class="chip" data-source="webmotors" onclick="setSource('webmotors')">Webmotors</div>
+    <div class="chip" data-source="icarros" onclick="setSource('icarros')">iCarros</div>
+    <div class="chip" data-source="outro" onclick="setSource('outro')">Outro</div>
+  </div>
+  <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+    <option value="newest">Mais recentes</option>
+    <option value="oldest">Mais antigos</option>
+    <option value="price_asc">Menor preço</option>
+    <option value="price_desc">Maior preço</option>
+  </select>
+</div>
+
+<div class="grid" id="grid">
+  <div class="loading">carregando anúncios...</div>
+</div>
+
+</div><!-- /app -->
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG — edite estes valores
+// ═══════════════════════════════════════
+const CONFIG = {
+  password: 'Xupet0viskk',          // senha de acesso ao site
+  githubUser: 'dillybinsx',       // seu usuário do GitHub
+  githubRepo: 'tranqueiras',   // nome do repositório
+};
+// ═══════════════════════════════════════
+
+let allListings = [];
+let activeSource = 'todos';
+
+// ── LOCK ──
+function unlock() {
+  const val = document.getElementById('lockInput').value;
+  if (val === CONFIG.password) {
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    sessionStorage.setItem('garage_auth', '1');
+    loadListings();
+  } else {
+    document.getElementById('lockError').style.display = 'block';
+    document.getElementById('lockInput').value = '';
+  }
+}
+
+if (sessionStorage.getItem('garage_auth') === '1') {
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadListings();
+}
+
+// ── LOAD DATA ──
+async function loadListings() {
+  try {
+    const url = `https://raw.githubusercontent.com/${CONFIG.githubUser}/${CONFIG.githubRepo}/main/data.json?t=${Date.now()}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Arquivo não encontrado');
+    allListings = await res.json();
+    document.getElementById('countBadge').textContent = `${allListings.length} anúncio${allListings.length !== 1 ? 's' : ''}`;
+    applyFilters();
+  } catch(e) {
+    document.getElementById('grid').innerHTML = `<div class="empty"><p>Nenhum anúncio ainda ou erro ao carregar. Configure o repositório no admin.</p></div>`;
+  }
+}
+
+// ── FILTERS ──
+function setSource(src) {
+  activeSource = src;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  document.querySelector(`[data-source="${src}"]`).classList.add('active');
+  applyFilters();
+}
+
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
+
+  let list = allListings.filter(item => {
+    const matchSrc = activeSource === 'todos' || item.source === activeSource;
+    const matchQ = !q || [item.title, item.brand, item.model, item.notes, item.city]
+      .filter(Boolean).some(f => f.toLowerCase().includes(q));
+    return matchSrc && matchQ;
+  });
+
+  list.sort((a, b) => {
+    if (sort === 'newest') return new Date(b.addedAt) - new Date(a.addedAt);
+    if (sort === 'oldest') return new Date(a.addedAt) - new Date(b.addedAt);
+    const pa = parsePrice(a.price), pb = parsePrice(b.price);
+    if (sort === 'price_asc') return pa - pb;
+    if (sort === 'price_desc') return pb - pa;
+    return 0;
+  });
+
+  renderGrid(list);
+}
+
+function parsePrice(p) {
+  if (!p) return Infinity;
+  return parseInt(p.replace(/\D/g, '')) || Infinity;
+}
+
+// ── RENDER ──
+function renderGrid(list) {
+  const grid = document.getElementById('grid');
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 7H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      <p>Nenhum anúncio encontrado.</p>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = list.map(item => cardHTML(item)).join('');
+}
+
+function cardHTML(item) {
+  const srcClass = `source-${item.source || 'outro'}`;
+  const srcLabel = { olx: 'OLX', facebook: 'Facebook', webmotors: 'Webmotors', icarros: 'iCarros', outro: 'Outro' }[item.source] || 'Outro';
+  const dateStr = item.addedAt ? new Date(item.addedAt).toLocaleDateString('pt-BR') : '';
+
+  const imgHTML = item.image
+    ? `<img class="card-img" src="${item.image}" alt="${item.title}" onerror="this.parentNode.innerHTML=placeholderSVG()">`
+    : `<div class="card-img-placeholder">${carSVG()}</div>`;
+
+  const specs = [];
+  if (item.year) specs.push(`<div class="spec"><strong>${item.year}</strong></div>`);
+  if (item.km) specs.push(`<div class="spec"><strong>${item.km}</strong> km</div>`);
+  if (item.city) specs.push(`<div class="spec">${item.city}</div>`);
+
+  const price = item.price
+    ? `<div class="card-price">${item.price}</div>`
+    : `<div class="card-price no-price">Sob consulta</div>`;
+
+  const notes = item.notes ? `<div class="card-notes">${item.notes}</div>` : '';
+
+  return `<div class="card">
+    <div class="fav-dot"></div>
+    ${imgHTML}
+    <div class="card-body">
+      <div class="card-source-row">
+        <span class="source-badge ${srcClass}">${srcLabel}</span>
+        <span class="card-date">${dateStr}</span>
+      </div>
+      <div class="card-title">${item.title}</div>
+      ${specs.length ? `<div class="card-specs">${specs.join('')}</div>` : ''}
+      ${price}
+      ${notes}
+    </div>
+    <div class="card-footer">
+      <a class="btn-link btn-primary" href="${item.url}" target="_blank" rel="noopener">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Ver anúncio
+      </a>
+      <button class="btn-link btn-secondary" onclick="copyLink('${item.url}')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copiar
+      </button>
+    </div>
+  </div>`;
+}
+
+function carSVG() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" xmlns="http://www.w3.org/2000/svg"><path d="M5 17H3a2 2 0 0 1-2-2V9l2-4h14l2 4v6a2 2 0 0 1-2 2h-2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/><path d="M5 9h14"/></svg>`;
+}
+
+function copyLink(url) {
+  navigator.clipboard.writeText(url).then(() => showToast('Link copiado!'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>
